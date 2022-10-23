@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -14,10 +15,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class FilmControllerTest {
     private FilmController filmController;
+    FilmService filmService;
 
     @BeforeEach
     public void beforeEach() {
-        filmController = new FilmController();
+        filmController = new FilmController(filmService);
     }
 
     @SneakyThrows
@@ -41,8 +43,8 @@ public class FilmControllerTest {
         final Long filmId = filmController.create(film1).getId();
 
         Film film2 = new Film("name", filmId, "description", LocalDate.of(1967, 03, 25), 100);
-        final IdAlreadyExistException exception = assertThrows(
-                IdAlreadyExistException.class,
+        final FilmAlreadyExistException exception = assertThrows(
+                FilmAlreadyExistException.class,
                 () -> filmController.create(film2));
 
         assertEquals("Ошибка IdAlreadyExistException: такой id уже существует", exception.getMessage());

@@ -1,5 +1,8 @@
 package ru.yandex.practicum.filmorate.model;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -8,11 +11,13 @@ import java.util.TreeSet;
 
 @Data
 public class Film {
-
+    @NotEmpty
+    @NotBlank
     String name;
     Long id;
     String description;
     LocalDate releaseDate;
+    @Positive
     long duration;
 
     TreeSet<Long> likes;

@@ -33,7 +33,6 @@ public class FilmService {
         if(filmStorage.getListFilmsId().contains(film.getId())) {
             log.info("Попытка добавить фильм с уже существующим id");
             throw new FilmAlreadyExistException(String.format("id %d уже существует", film.getId()));
-            // throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("id %d уже существует", film.getId()));
         }
 
         if(filmStorage.findAll().contains(film)) {

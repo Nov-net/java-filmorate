@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import javax.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -8,11 +9,14 @@ import java.util.TreeSet;
 
 @Data
 public class User {
-
+    @NotEmpty
+    @NotBlank
     String login;
     String name;
     Long id;
+    @Email
     String email;
+    @Past
     LocalDate birthday;
 
     TreeSet<Long> friends;

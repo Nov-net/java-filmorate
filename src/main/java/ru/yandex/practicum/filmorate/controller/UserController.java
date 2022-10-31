@@ -1,16 +1,13 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.*;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import javax.validation.Valid;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,87 +15,69 @@ import java.util.Map;
 @RequestMapping("/users")
 @Slf4j
 public class UserController {
-    private final Map<Long, User> users = new HashMap<>();
-    private long userId = 0;
+    UserService userService;
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @PostMapping
+    public User create(@Valid @RequestBody User user) {
+        log.info("Получен запрос POST/users - создание нового пользователя");
+        return userService.create(user);
+    }
+
+    @PutMapping
+    public User update(@Valid @RequestBody User user) {
+        log.info("Получен запрос PUT/users - обновление пользователя с id {}", user.getId());
+        return userService.update(user);
+    }
 
     @GetMapping
     public List<User> findAll() {
         log.info("Получен запрос GET/users - получение списка пользователей");
-        log.info("Текущее количество пользователей: {}", users.size());
-        List <User> list = new ArrayList<>();
-        for(User u : users.values()) {
-            list.add(u);
-        }
-        return list;
+        return userService.findAll();
     }
 
+    // GET /users/{id} — поиск пользователя по id
+    @GetMapping("/{id}")
+    public User findUserById(@PathVariable(required = false) Long id) {
+        log.info("Получен запрос GET/users/{id} - получение пользователя по id");
+        return userService.findUserById(id);
+    }
+
+    // PUT /users/{id}/friends/{friendId} — добавление в друзья
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable("id") Long id) {
+        log.info("Получен запрос GET/users/{id}/friends - получение списка друзей");
+        return userService.getFriends(id);
+    }
+
+    // PUT /users/{id}/friends/{friendId} — добавление в друзья
+    @PutMapping("/{id}/friends/{friendId}")
+    public String addAsFriend(@PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
+        log.info("Получен запрос PUT/users/{id}/friends/{friendId} - добавление в друзья");
+        return userService.addAsFriend(id, friendId);
+    }
+
+    // DELETE /users/{id}/friends/{friendId} — удаление из друзей
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public String deleteFromFriend(@PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
+        log.info("Получен запрос DELETE/users/{id}/friends/{friendId} — удаление из друзей");
+        return userService.deleteFromFriend(id, friendId);
+    }
+
+    // GET /users/{id}/friends/common/{otherId} — список друзей, общих с другим пользователем
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> mutualFriendsList(@PathVariable("id") Long id, @PathVariable("otherId") Long otherId) {
+        log.info("Получен запрос GET/users/{id}/friends/common/{otherId} — список общих друзей");
+        return userService.mutualFriendsList(id, otherId);
+    }
+
+    // получение списка пользователей для теста (Спринт 9)
     public Map<Long, User> findAllForTest() {
-        return users;
-    }
-
-    @SneakyThrows
-    @PostMapping
-    public User create(@Valid @RequestBody User user) {
-        log.info("Получен запрос POST/users - создание нового пользователя");
-        if(users.containsKey(user.getId())) {
-            log.info("Попытка добавить пользователя с уже существующим id");
-            throw new IdAlreadyExistException();
-        }
-        if(user.getLogin() == null || user.getLogin().isEmpty() || user.getLogin().isBlank()) {
-            log.info("Попытка создать пользователя без указания логина");
-            throw new InvalidNameException();
-        }
-        if(user.getEmail() == null || !user.getEmail().contains("@")) {
-            log.info("Попытка создать пользователя с некорректным email");
-            throw new InvalidEmailException();
-        }
-        if(user.getBirthday().isAfter(LocalDate.now())) {
-            log.info("Попытка добавить пользователя из будущего");
-            throw new InvalidBirthdateException();
-        }
-        if(user.getName() == null) {
-            log.info("Попытка добавить пользователя с пустым полем name");
-            user.setName(user.getLogin());
-            log.info("В значение пустого поля name установлен логин пользователя: {}", user.getLogin());
-        }
-
-        userId++;
-        user.setId(userId);
-        log.info("Установлен id пользователя: {}", userId);
-        users.put(user.getId(), user);
-        log.info("Добавлен новый пользователь: {}", user);
-        return user;
-    }
-
-    @SneakyThrows
-    @PutMapping
-    public User update(@Valid @RequestBody User user) {
-        log.info("Получен запрос PUT/users - обновление пользователя с id {}", user.getId());
-        if(user.getId() == null || !users.containsKey(user.getId())) {
-            log.info("Попытка обновить пользователя с пустым или несущетвующим id");
-            throw new InvalidIdException();
-        }
-        if(user.getLogin() == null || user.getLogin().isEmpty() || user.getLogin().isBlank()) {
-            log.info("Попытка создать пользователя без указания логина");
-            throw new InvalidNameException();
-        }
-        if(user.getEmail() == null || !user.getEmail().contains("@")) {
-            log.info("Попытка создать пользователя с некорректным email");
-            throw new InvalidEmailException();
-        }
-        if(user.getBirthday().isAfter(LocalDate.now())) {
-            log.info("Попытка добавить пользователя из будущего");
-            throw new InvalidBirthdateException();
-        }
-        if(user.getName() == null) {
-            log.info("Попытка добавить пользователя с пустым полем name");
-            user.setName(user.getLogin());
-            log.info("В значение пустого поля name установлен логин пользователя: {}", user.getLogin());
-        }
-
-        users.put(user.getId(), user);
-        log.info("Пользователь обновлен: {}", user);
-        return user;
+        InMemoryUserStorage inMemoryUserStorage = new InMemoryUserStorage();
+        return inMemoryUserStorage.findAllForTest();
     }
 
 }

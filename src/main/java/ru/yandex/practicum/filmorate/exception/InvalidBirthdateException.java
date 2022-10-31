@@ -1,11 +1,8 @@
 package ru.yandex.practicum.filmorate.exception;
 
-public class InvalidBirthdateException extends Throwable {
-    public InvalidBirthdateException() {
-        System.out.println("Ошибка InvalidBirthdateException: пользователь из будущего");
+public class InvalidBirthdateException extends RuntimeException {
+    public InvalidBirthdateException(String message) {
+        super(message);
     }
 
-    public String getMessage() {
-        return "Ошибка InvalidBirthdateException: пользователь из будущего";
-    }
 }

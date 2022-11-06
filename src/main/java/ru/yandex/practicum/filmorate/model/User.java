@@ -1,56 +1,30 @@
 package ru.yandex.practicum.filmorate.model;
 
-import javax.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
-import java.util.TreeSet;
 
 @Data
+@Builder
 public class User {
-    @NotEmpty
-    @NotBlank
+    Long id;
     String login;
     String name;
-    Long id;
-    @Email
     String email;
-    @Past
     LocalDate birthday;
+    List<Long> friends;
 
-    TreeSet<Long> friends;
-
-    public User(String login, String name, Long id, String email, LocalDate birthday) {
+    public User(Long id, String login, String name, String email, LocalDate birthday, List<Long> friends) {
         this.id = id;
         this.name = name;
         this.login = login;
         this.email = email;
         this.birthday = birthday;
+        this.friends = friends;
     }
-
-    public boolean addAsFriend(Long friendId) {
-        if (friends == null && id != friendId) {
-            friends = new TreeSet<>();
-            friends.add(friendId);
-            return true;
-        } else if (!friends.contains(friendId) && id != friendId){
-            friends.add(friendId);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public boolean deleteFromFriend (Long friendId) {
-        if (friends.contains(friendId)) {
-            friends.remove(friendId);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
 
     @Override
     public boolean equals(Object o) {

@@ -43,7 +43,14 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<Map<String, String>> handleIdAlreadyExistException(final FilmAlreadyExistException e) {
+    public ResponseEntity<Map<String, String>> handleFilmAlreadyExistException(final FilmAlreadyExistException e) {
+        return new ResponseEntity<>(Map.of("error:", e.getMessage()),
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Map<String, String>> handleUserAlreadyExistException(final UserAlreadyExistException e) {
         return new ResponseEntity<>(Map.of("error:", e.getMessage()),
                 HttpStatus.BAD_REQUEST);
     }
@@ -88,6 +95,13 @@ public class ErrorHandler {
     public ResponseEntity<Map<String, String>> handleInvalidBirthdateException(final InvalidBirthdateException e) {
         return new ResponseEntity<>(Map.of("error:", e.getMessage()),
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<Map<String, String>> handleNotFoundException(final NotFoundException e) {
+        return new ResponseEntity<>(Map.of("error:", e.getMessage()),
+                HttpStatus.NOT_FOUND);
     }
 
 }

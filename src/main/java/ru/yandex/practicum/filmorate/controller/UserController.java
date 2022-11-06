@@ -5,11 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -46,7 +44,7 @@ public class UserController {
         return userService.findUserById(id);
     }
 
-    // PUT /users/{id}/friends/{friendId} — добавление в друзья
+    // GET /users/{id}/friends - получение списка друзей
     @GetMapping("/{id}/friends")
     public List<User> getFriends(@PathVariable("id") Long id) {
         log.info("Получен запрос GET/users/{id}/friends - получение списка друзей");
@@ -72,12 +70,6 @@ public class UserController {
     public List<User> mutualFriendsList(@PathVariable("id") Long id, @PathVariable("otherId") Long otherId) {
         log.info("Получен запрос GET/users/{id}/friends/common/{otherId} — список общих друзей");
         return userService.mutualFriendsList(id, otherId);
-    }
-
-    // получение списка пользователей для теста (Спринт 9)
-    public Map<Long, User> findAllForTest() {
-        InMemoryUserStorage inMemoryUserStorage = new InMemoryUserStorage();
-        return inMemoryUserStorage.findAllForTest();
     }
 
 }

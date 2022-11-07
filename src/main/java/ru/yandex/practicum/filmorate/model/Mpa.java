@@ -8,4 +8,9 @@ import lombok.Data;
 public class Mpa {
     Long id;
     String name;
+
+    public Mpa(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
 }

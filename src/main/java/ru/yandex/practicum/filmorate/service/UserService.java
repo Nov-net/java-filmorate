@@ -96,7 +96,7 @@ public class UserService {
         checkId(id, friendId);
         if(findUserById(id) != null) {
             if (findUserById(friendId) != null) {
-                if (id.equals(friendId)) {
+                if (!id.equals(friendId)) {
                     userStorage.addAsFriend(id, friendId);
                     log.info("Пользователь с id {} добавлен в друзья к пользователю {} ", friendId, id);
                     return String.format("Пользователь с id %d  добавлен в друзья к пользователю %d", friendId, id);

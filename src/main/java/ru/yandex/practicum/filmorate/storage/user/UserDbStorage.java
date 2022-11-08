@@ -108,7 +108,7 @@ public class UserDbStorage implements UserStorage {
 
         for (Long i : getIdFriends(id)) {
             for (Long j : getIdFriends(otherId)) {
-                if (i == j) {
+                if (i.equals(j)) {
                     list.add(findUserById(j));
                 }
             }

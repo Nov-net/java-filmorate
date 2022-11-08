@@ -75,7 +75,6 @@ public class MpaDbStorage implements MpaStorage{
         log.info("Получение id mpa по id фильма {}", id);
         String sql = "select mpa_id from FILM_MPA where film_id = ?";
 
-        //return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeMpaId(rs), id);
         try{
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeMpaId(rs), id);
         } catch (EmptyResultDataAccessException e) {

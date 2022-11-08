@@ -96,7 +96,7 @@ public class UserService {
         checkId(id, friendId);
         if(findUserById(id) != null) {
             if (findUserById(friendId) != null) {
-                if (id != friendId) {
+                if (id.equals(friendId)) {
                     userStorage.addAsFriend(id, friendId);
                     log.info("Пользователь с id {} добавлен в друзья к пользователю {} ", friendId, id);
                     return String.format("Пользователь с id %d  добавлен в друзья к пользователю %d", friendId, id);
@@ -118,7 +118,7 @@ public class UserService {
     public List<User> getFriends(Long id) {
         if (id == null) {
             log.info("Попытка получить список друзей пользователя с пустым id");
-            throw new InvalidIdException(String.format("Пользователь с пустым id"));
+            throw new InvalidIdException("Пользователь с пустым id");
         }
         if(findUserById(id) == null) {
             log.info("Попытка получить список друзей пользователя с несуществующим id");

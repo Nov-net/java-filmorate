@@ -5,11 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -67,9 +65,4 @@ public class FilmController {
         return filmService.findPopularFilms(count);
     }
 
-    // получение списка фильмов для теста (Спринт 9)
-    public Map<Long, Film> findAllForTest() {
-        InMemoryFilmStorage inMemoryFilmStorage = new InMemoryFilmStorage();
-        return inMemoryFilmStorage.findAllForTest();
-    }
 }

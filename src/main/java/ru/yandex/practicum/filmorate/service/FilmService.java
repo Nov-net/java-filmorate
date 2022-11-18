@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -30,7 +29,7 @@ public class FilmService {
 
     public Film create(Film film) {
 
-        if(filmStorage.getListFilmsId().contains(film.getId())) {
+        if(film.getId() != null && findFilmById(film.getId()) != null) {
             log.info("Попытка добавить фильм с уже существующим id");
             throw new FilmAlreadyExistException(String.format("id %d уже существует", film.getId()));
         }
@@ -62,11 +61,16 @@ public class FilmService {
                     film.getDuration()));
         }
 
+        if(film.getMpa() == null) {
+            log.info("Попытка добавить фильм без mpa");
+            throw new InvalidNameException("У фильма отсутствует mpa");
+        }
+
         return filmStorage.create(film);
     }
 
     public Film update(Film film) {
-        if(film.getId() == null || !filmStorage.getListFilmsId().contains(film.getId())) {
+        if(film.getId() == null || findFilmById(film.getId()) == null) {
             log.info("Попытка обновить фильм с несуществующим или пустым id: {}", film.getId());
             throw new InvalidIdException(String.format("Пустой или несуществующий id: %d", film.getId()));
         }
@@ -98,39 +102,24 @@ public class FilmService {
 
     // поиск фильма по id
     public Film findFilmById(Long id) {
-        log.info("Получение фильма по id {} ", id);
-        if(id == null || !filmStorage.getListFilmsId().contains(id)) {
-            log.info("Попытка получить фильм с несуществующим или пустым id: {}", id);
-            throw new InvalidIdException(String.format("Пустой или несуществующий id: %d", id));
+        if (filmStorage.findFilmById(id) != null) {
+            return filmStorage.findFilmById(id);
+        } else {
+            throw new FilmNotFoundException(String.format("Фильм с id %d не найден", id));
         }
-
-        return filmStorage.findAll().stream()
-                    .filter(f -> f.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new FilmNotFoundException(String.format("Фильм с id %d не найден", id)));
-    }
-
-    // поиск пользователя по id
-    public User findUserById(Long id) {
-        log.info("Получение пользователя по id {} ", id);
-        return userStorage.findAll().stream()
-                          .filter(u -> u.getId().equals(id))
-                          .findFirst()
-                          .orElseThrow(() -> new UserNotFoundException(String.format("Пользователь с id %d не найден", id)));
     }
 
     // поставить лайк фильму
     public String addLike(Long id, Long userId) {
         checkId(id, userId);
-        if(userStorage.getListUsersId().contains(userId)) {
-            if (filmStorage.getListFilmsId().contains(id)) {
-                findFilmById(id).addLike(userId);
+        if(userStorage.findUserById(userId) != null) {
+            if (findFilmById(id) != null) {
+                filmStorage.addLike(id, userId);
                 log.info("Фильму с id {} поставлен лайк пользователем {}", id, userId);
                 return String.format("Фильму с id %d поставлен лайк пользователем с id %d", id, userId);
             } else {
                 log.info("Попытка поставить лайк фильму с несуществующим id {}", id);
                 throw new FilmNotFoundException(String.format("Фильм с id %d не найден", id));
-
             }
         } else {
             log.info("Попытка поставить лайк от пользователя с несуществующим id {}", userId);
@@ -141,11 +130,16 @@ public class FilmService {
     // удалить лайк
     public String deleteLike(Long id, Long userId) {
         checkId(id, userId);
-        if(userStorage.getListUsersId().contains(userId)) {
-            if (filmStorage.getListFilmsId().contains(id)) {
-                findFilmById(id).deleteLike(userId);
-                log.info("У фильма с id {} удален лайк пользователем {}", id, userId);
-                return String.format("У фильма с id %d удален лайк пользователем с id %d", id, userId);
+        if(userStorage.findUserById(userId) != null) {
+            if (findFilmById(id) != null) {
+                if (filmStorage.deleteLike(id, userId)) {
+                    log.info("У фильма с id {} удален лайк пользователем {}", id, userId);
+                    return String.format("У фильма с id %d удален лайк пользователем с id %d", id, userId);
+                } else {
+                    log.info("У фильма с id {} нет лайка от пользователя с id {}", id, userId);
+                    return String.format("У фильма с id %d нет лайка от пользователя с id %d", id, userId);
+                }
+
             } else {
                 log.info("Попытка удалить лайк у фильма с несуществующим id {}", id);
                 throw new FilmNotFoundException(String.format("Фильм с id %d не найден", id));
@@ -174,28 +168,12 @@ public class FilmService {
             throw new IncorrectCountException("count");
         }
 
-        if (findAll() != null) {
-            return findAll().stream()
-                    .sorted((f0, f1) -> compare(f0, f1))
-                    .limit(count)
-                    .collect(Collectors.toList());
+        if (filmStorage.findPopularFilms(count) != null) {
+            log.info("Список популярных фильмов сформирован");
+            return filmStorage.findPopularFilms(count);
         } else {
+            log.info("Популярных фильмов нет :( ");
             return null;
         }
-
     }
-
-    private int compare(Film f0, Film f1) {
-        int a = 0;
-        int b = 0;
-        if(f1.getLikes() != null) {
-                a = f1.getLikes()
-                           .size();
-        } else if (f0.getLikes() != null) {
-            b =  f0.getLikes()
-                     .size();
-        }
-        return a - b;
-    }
-
 }

@@ -10,5 +10,8 @@ public interface FilmStorage {
     public Film create(Film film);
     public Film update(Film film);
     public List<Film> findAll();
-    public ArrayList<Long> getListFilmsId();
+    public Film findFilmById(Long id);
+    public String addLike(Long id, Long userId);
+    public boolean deleteLike(Long id, Long userId);
+    public List<Film> findPopularFilms(Integer count);
 }

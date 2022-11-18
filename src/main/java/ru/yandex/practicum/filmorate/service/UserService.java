@@ -9,13 +9,12 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @Slf4j
 public class UserService {
-    private UserStorage userStorage;
+    private final UserStorage userStorage;
 
     @Autowired
     public UserService(UserStorage userStorage) {
@@ -24,7 +23,7 @@ public class UserService {
 
     @SneakyThrows
     public User create(User user) {
-        if(userStorage.getListUsersId().contains(user.getId())) {
+        if(user.getId() != null && findUserById(user.getId()) != null) {
             log.info("Попытка добавить пользователя с уже существующим id");
             throw new UserAlreadyExistException(String.format("id %d уже существует", user.getId()));
         }
@@ -55,7 +54,7 @@ public class UserService {
 
     @SneakyThrows
     public User update(User user) {
-        if(user.getId() == null || !userStorage.getListUsersId().contains(user.getId())) {
+        if(user.getId() == null || findUserById(user.getId()) == null) {
             log.info("Попытка обновить пользователя с пустым или несуществующим id");
             throw new InvalidIdException(String.format("Пользователь с пустым или несуществующим id %d", user.getId()));
         }
@@ -84,43 +83,23 @@ public class UserService {
         return userStorage.findAll();
     }
 
-    // поиск пользователя по id
     public User findUserById(Long id) {
-        return userStorage.findAll().stream()
-                          .filter(p -> p.getId().equals(id))
-                          .findFirst()
-                          .orElseThrow(() -> new UserNotFoundException(String.format("Пользователь с id %d не найден", id)));
-    }
-
-    // получение писка друзей
-    public List<User> getFriends(Long id) {
-        if (id == null) {
-            log.info("Попытка получить список друзей пользователя с пустым id");
-            throw new InvalidIdException(String.format("Пользователь с пустым id"));
+        if (userStorage.findUserById(id) != null){
+            return userStorage.findUserById(id);
+        } else {
+            throw new UserNotFoundException(String.format("Пользователь с id %d не найден", id));
         }
-        if(!userStorage.getListUsersId().contains(id)) {
-            log.info("Попытка получить список друзей пользователя с несуществующим id");
-            throw new InvalidIdException(String.format("Пользователь с несуществующим id %d", id));
-        }
-
-        List<User> list = new ArrayList<>();
-        for(Long l : findUserById(id).getFriends()) {
-            list.add(findUserById(l));
-        }
-
-        return list;
     }
 
     // добавление в друзья
     public String addAsFriend(Long id, Long friendId) {
         checkId(id, friendId);
-        if(userStorage.getListUsersId().contains(id)) {
-            if (userStorage.getListUsersId().contains(friendId)) {
-                if (id != friendId) {
-                    findUserById(id).addAsFriend(friendId);
-                    findUserById(friendId).addAsFriend(id);
-                    log.info("Пользователи с id {} и {} добавлены в друзья", id, friendId);
-                    return String.format("Пользователи с id %d и %d добавлены в друзья", id, friendId);
+        if(findUserById(id) != null) {
+            if (findUserById(friendId) != null) {
+                if (!id.equals(friendId)) {
+                    userStorage.addAsFriend(id, friendId);
+                    log.info("Пользователь с id {} добавлен в друзья к пользователю {} ", friendId, id);
+                    return String.format("Пользователь с id %d  добавлен в друзья к пользователю %d", friendId, id);
                 } else {
                     log.info("Попытка добавить пользователя с id {} в друзья к пользователю с id  {}", id, friendId);
                     throw new InvalidIdException ("Вы не можете добавить себя к себе в друзья");
@@ -129,24 +108,39 @@ public class UserService {
                 log.info("Попытка добавить в друзья пользователя с несуществующим id {}", friendId);
                 throw new UserNotFoundException(String.format("Пользователь с id %d не найден", friendId));
             }
-
         } else {
             log.info("Попытка добавить друга к пользователю с несуществующим id {}", id);
             throw new UserNotFoundException(String.format("Пользователь с id %d не найден", id));
         }
     }
 
+    // получение писка друзей
+    public List<User> getFriends(Long id) {
+        if (id == null) {
+            log.info("Попытка получить список друзей пользователя с пустым id");
+            throw new InvalidIdException("Пользователь с пустым id");
+        }
+        if(findUserById(id) == null) {
+            log.info("Попытка получить список друзей пользователя с несуществующим id");
+            throw new InvalidIdException(String.format("Пользователь с несуществующим id %d", id));
+        }
+
+        return userStorage.getFriends(id);
+    }
+
     // удаление из друзей
     public String deleteFromFriend(Long id, Long friendId) {
         checkId(id, friendId);
-        if(userStorage.getListUsersId().contains(id)) {
-            if (userStorage.getListUsersId().contains(friendId)) {
-                findUserById(id).deleteFromFriend(friendId);
-                log.info("У пользователя с id {} удален из друзей пользователь с id {}", id, friendId);
-                findUserById(friendId).deleteFromFriend(id);
-                log.info("У пользователя с id {} удален из друзей пользователь с id {}", friendId, id);
-                log.info("Пользователи с id {} и {} удалены из друзей", id, friendId);
-                return String.format("Пользователи с id %d и %d удалены из друзей", id, friendId);
+        if(findUserById(id) != null) {
+            if (findUserById(friendId) != null) {
+                if (userStorage.deleteFromFriend(id, friendId)) {
+                    log.info("У пользователя с id {} удален из друзей пользователь с id {}", id, friendId);
+                    return String.format("У пользователя с id %d удален из друзей пользователь с id %d", id, friendId);
+                } else {
+                    log.info("У пользователя с id {} нет друга с id {}", id, friendId);
+                    return String.format("У пользователя с id %d нет друга с id %d", id, friendId);
+                }
+
             } else {
                 log.info("Попытка удалить из друзей пользователя с несуществующим id {}", friendId);
                 throw new UserNotFoundException(String.format("Пользователь с id %d не найден", friendId));
@@ -160,21 +154,16 @@ public class UserService {
 
     // список общих друзей
     public List<User> mutualFriendsList(Long id, Long otherId) {
-        List <User> list = new ArrayList<>();
 
         checkId(id, otherId);
-        if(findUserById(id).getFriends() == null || findUserById(otherId).getFriends() == null) {
-            return list;
+
+        if(findUserById(id) != null && findUserById(otherId) != null) {
+            log.info("Найдены общие друзья пользователей с id {} и id {}", id, otherId);
+            return userStorage.mutualFriendsList(id, otherId);
         } else {
-            for (Long i : findUserById(id).getFriends()) {
-                for (Long j : findUserById(otherId).getFriends()) {
-                    if (i == j) {
-                        list.add(findUserById(j));
-                    }
-                }
-            }
+            log.info("Попытка найти друзей пользователя с несуществующим id {}", otherId);
+            throw new UserNotFoundException(String.format("Пользователь с id %d не найден", otherId));
         }
-        return list;
     }
 
     private void checkId(Long id, Long friendId) {
